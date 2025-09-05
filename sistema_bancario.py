@@ -1,5 +1,5 @@
 from datetime import datetime
-menu_principal = """MENU
+menu_operacoes = """
 1 - DEPOSITO
 2 - SAQUE
 3 - EXTRATO
@@ -7,10 +7,18 @@ menu_principal = """MENU
 
 -->"""
 
+menu_inicial="""
+1 - LOGIN
+2 - REGISTRO
+3 - SAIR
+
+-->"""
+
 saldo = 0.0
 limite = 0.0
 extrato_bancario = [[],[],[],[]]
-opcoes = ["1","2","3","4"]
+opcoes_menu_operacoes = ["1","2","3","4"]
+opcoes_menu_inicial = ["1","2","3"]
 
 def validador_de_valor_de_entrada(valor):
     if type(valor) is float and valor > 0:
@@ -67,9 +75,9 @@ def extrato():
                 print(f"Saque de R${extrato_bancario[0][x]:.2f} data: {extrato_bancario[1][x]} horario: {extrato_bancario[2][x]}")       
     print(f"saldo: R${saldo:.2f}")
 
-while 1 == 1:
-    opcao = input(menu_principal)
-    if(opcao in opcoes):
+def chamar_menu_operacoes():
+    opcao = input(menu_operacoes)
+    if(opcao in opcoes_menu_operacoes):
         match opcao:
             case "1" :
                 deposito_extrato = deposito(validador_de_valor_de_entrada(float(input("Valor do Deposito\n-->R$"))))
@@ -89,3 +97,15 @@ while 1 == 1:
 
     else:
         print("Opção invalida! ")
+        chamar_menu_operacoes()
+
+def chamar_menu_inicial():
+    opcao = input(menu_inicial)
+    if opcao in opcoes_menu_inicial:
+        match opcao:
+            case "1":
+                print()
+            case "2":
+                print()
+            case "3":
+                exit()
