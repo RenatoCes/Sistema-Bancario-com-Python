@@ -17,8 +17,9 @@ menu_inicial="""
 saldo = 0.0
 limite = 0.0
 extrato_bancario = [[],[],[],[]]
-opcoes_menu_operacoes = ["1","2","3","4"]
-opcoes_menu_inicial = ["1","2","3"]
+email_senha = [[],[]]
+
+
 
 def validador_de_valor_de_entrada(valor):
     if type(valor) is float and valor > 0:
@@ -75,7 +76,32 @@ def extrato():
                 print(f"Saque de R${extrato_bancario[0][x]:.2f} data: {extrato_bancario[1][x]} horario: {extrato_bancario[2][x]}")       
     print(f"saldo: R${saldo:.2f}")
 
+def validar_email(email):
+    if email in email_senha[0]:
+        return False
+    elif email[-9:] == "gmail.com" or email[-11] == "hotmail.com":
+        return True
+    else:
+        return False
+
+def validar_senha(senha):
+    if len(senha) == 8:
+        return True
+    else:
+        return False
+    
+def validar_login(email, senha):
+    if email in email_senha[0] and email_senha[0].index(email) == senha:
+        return True
+    else:
+        return False
+
+
+    
+    
+
 def chamar_menu_operacoes():
+    opcoes_menu_operacoes = ["1","2","3","4"]
     opcao = input(menu_operacoes)
     if(opcao in opcoes_menu_operacoes):
         match opcao:
@@ -100,12 +126,18 @@ def chamar_menu_operacoes():
         chamar_menu_operacoes()
 
 def chamar_menu_inicial():
+    opcoes_menu_inicial = ["1","2","3"]
     opcao = input(menu_inicial)
     if opcao in opcoes_menu_inicial:
         match opcao:
             case "1":
-                print()
+                nome_usuario = input("Nome:\n-->")
+                if email_usuario not in email_senha[0]:
+                    senha_usuario = input("Senaha:\n-->")
+
             case "2":
+                nome_usuario = input("Nome:\n-->")
+                senha_usuario = input("Senaha:\n-->")
                 print()
             case "3":
                 exit()
