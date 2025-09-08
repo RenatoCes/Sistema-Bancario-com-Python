@@ -19,6 +19,7 @@ extrato_bancario = [[[],[],[],[]]]
 email_senha_usuario = [["python@gmail.com"],["12345678"],["Python"]]
 sistema = True
 quantia_de_saques_realizados_no_dia = 0
+#TODO fazer uma lista de depósitos diários, separar email_senha_usuario, adicionar lista para cpf ou substiituir email por cpf, saldo individual
 
 def validador_de_valor_de_entrada(valor):
     if type(valor) is float and valor > 0:
@@ -29,6 +30,7 @@ def validador_de_valor_de_entrada(valor):
         return 0.0
     
 def deposito(valor, index_email):
+    print(index_email)
     if valor > 0 and extrato_bancario[index_email][1].count(datetime.now().strftime("%d/%m/%Y")) < 10:
         print(f"Deposio de R${valor:.2f} realizado.")
         acrescentar_no_extrato(valor, True, index_email)
@@ -41,6 +43,7 @@ def deposito(valor, index_email):
         return False, 0
 
 def saque(valor, saldo, quantia_de_saques_realizados_no_dia, index_email):
+    print(index_email)
     transacoes_do_dia = extrato_bancario[index_email][1].count(datetime.now().strftime("%d/%m/%Y"))
     saque_valido = valor <= saldo and valor > 0 and valor <= 500 and quantia_de_saques_realizados_no_dia < 3 and transacoes_do_dia < 10
     saque_limite_transacao = valor > 0 and valor > 500 and quantia_de_saques_realizados_no_dia < 3 and quantia_de_saques_realizados_no_dia  < 10
@@ -71,8 +74,9 @@ def acrescentar_no_extrato(valor, valor_positivo_negativo, index_email):
     extrato_bancario[index_email][2].append(data_tempo.strftime("%H:%M:%S"))
     extrato_bancario[index_email][3].append(valor_positivo_negativo)
 
-def extrato(index_email):    
-    for x in range(len(extrato_bancario[0])):
+def extrato(index_email):
+    print(index_email)
+    for x in range(len(extrato_bancario[index_email][0])):
             if extrato_bancario[index_email][3][x] == True:
                 print(f"Deposito de R${extrato_bancario[index_email][0][x]:.2f} data: {extrato_bancario[index_email][1][x]} horario: {extrato_bancario[index_email][2][x]}")
             else:
@@ -135,16 +139,16 @@ while sistema == True:
             if(opcao in opcoes_menu_operacoes):
                 match opcao:
                     case "1" :
-                        resposta_do_deposito = deposito(validador_de_valor_de_entrada(float(input("Valor do Deposito\n-->R$"))), email_senha_usuario.index(email))
+                        resposta_do_deposito = deposito(validador_de_valor_de_entrada(float(input("Valor do Deposito\n-->R$"))), email_senha_usuario[0].index(email))
                         if resposta_do_deposito[0] == True:
                             saldo += resposta_do_deposito[1]
                     case "2" : 
-                        resposta_do_saque = saque(validador_de_valor_de_entrada(float(input("Valor do Saque\n-->R$"))), saldo, quantia_de_saques_realizados_no_dia, email_senha_usuario.index(email))
+                        resposta_do_saque = saque(validador_de_valor_de_entrada(float(input("Valor do Saque\n-->R$"))), saldo, quantia_de_saques_realizados_no_dia, email_senha_usuario[0].index(email))
                         if resposta_do_saque[0] == True:
                             saldo -= resposta_do_saque[1]
                             quantia_de_saques_realizados_no_dia += 1
                     case "3" :
-                        extrato(email_senha_usuario.index(email))
+                        extrato(email_senha_usuario[0].index(email))
                     case "4" :
                         tela = 0
 
