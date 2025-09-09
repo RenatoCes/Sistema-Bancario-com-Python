@@ -153,7 +153,6 @@ while sistema == True:
                             criar_conta(cpf, senha, nome, data_de_nascimento, endereco)
                             index = usuario[0].index(cpf)
                             tela = 1
-                            print(usuario, extrato_bancario)
 
                     case "3":
                         print("Fim do Programa")
