@@ -13,14 +13,13 @@ telas = ["""
 -->"""]
 tela = 0
 nome = ""
-gmail = ""
+cpf = ""
 extrato_bancario = [[[],[],[],[],]] #valor, data, hora, bool
 saldo_e_quantia_de_saques = [[[0.0],[0]]]
-email_senha_usuario = [["python@gmail.com"],["12345678"],["Python"]]
+usuario = [["00000000000"],["12345678"],["Python"],[["01","01","1990"]],[["rua","01","Py","Pylandia","Pylandia"]],[datetime.now()]]#cpf, senha, nome, data_de_nascimento, endereço, data_de_criação_da_conta
 index = 0
 sistema = True
 quantia_de_saques_realizados_no_dia = 0
-#TODO fazer uma lista de depósitos diários, separar email_senha_usuario, adicionar lista para cpf ou substiituir email por cpf, saldo individual
 
 def validador_de_valor_de_entrada(valor):
     if type(valor) is float and valor > 0:
@@ -81,23 +80,47 @@ def extrato(index, saldo):
                 print(f"Saque de R${extrato_bancario[index][0][x]:.2f} data: {extrato_bancario[index][1][x]} horario: {extrato_bancario[index][2][x]}")       
     print(f"saldo: R${saldo:.2f}")
 
-def validar_registro(email, senha):
-    email_senha_valida = email not in email_senha_usuario[0] and (email[-9:] == "gmail.com" or email[-11:] == "hotmail.com") and len(senha) == 8
-    if email_senha_valida:
+def validar_registro(cpf, senha):
+    cpf_e_senha_valida = cpf not in usuario[0] and len(cpf) == 11
+    if cpf_e_senha_valida:
         print("Registro autorizado!")
         return True
     else:
-        print("registro negado, email ou senha invalida!")
+        print("registro negado, cpf ou senha invalida!")
         return False
     
-def validar_login(email, senha):
-    if email in email_senha_usuario[0] and email_senha_usuario[1][email_senha_usuario[0].index(email)] == senha:
+def validar_login(cpf, senha):
+    if cpf in usuario[0] and usuario[1][usuario[0].index(cpf)] == senha:
         print("Login autorizado!")
         return True
     else:
-        print("Login negado, email ou senha invalida!")
+        print("Login negado, cpf ou senha invalida!")
         return False
 
+def criar_conta(cpf, senha, nome, data_de_nascimento, endereco):
+
+    extrato_bancario.append([[],[],[],[],[],[]])
+    saldo_e_quantia_de_saques.append([[0.0],[0]])
+    usuario[0].append(cpf)
+    usuario[1].append(senha)
+    usuario[2].append(nome)
+    usuario[3].append(data_de_nascimento)
+    usuario[4].append(endereco)
+    usuario[5].append(datetime.now())
+
+def formatador_de_endereco():
+    rua = input("NOME DA RUA:\n-->")
+    numero = input("NÚMERO:\n-->")
+    bairro = input("NOME DO BAIRRO:\n-->")
+    cidade = input("NOME DA CIDADE:\n-->")
+    estado = input("NOME DO ESTADO:\n-->")
+    return rua, numero, bairro, cidade, estado
+
+def formatador_de_data_de_nascimento():
+    dia = input("DIA DA DATA DO SEU NASCIMENTO:\n-->")
+    mes = input("MÊS DA DATA DO SEU NASCIMENTO:\n-->")
+    ano = input("ANO DA DATA DO SEU NASCIMENTO:\n-->")
+    return dia, mes, ano
 
 while sistema == True:
     
@@ -108,26 +131,24 @@ while sistema == True:
             if opcao in opcoes_menu_0:
                 match opcao:
                     case "1":                
-                        email = input("Email:\n-->")
-                        senha = input("Senha:\n-->")
-                        if validar_login(email, senha) == True:
+                        cpf = input("CPF:\n-->")
+                        senha = input("SENHA DE 8 DÍGITOS:\n-->")
+                        if validar_login(cpf, senha) == True:
                             tela = 1
-                            nome = email_senha_usuario[2][email_senha_usuario[0].index(email)]
-                            index = email_senha_usuario[0].index(email)
+                            nome = usuario[2][usuario[0].index(cpf)]
+                            index = usuario[0].index(cpf)
 
                     case "2":
-                        nome = input("Nome:\n-->")
-                        email = input("Email:\n-->")
-                        senha = input("Senha:\n-->")
-                        if validar_registro(email, senha) == True:
-                            email_senha_usuario[0].append(email)
-                            email_senha_usuario[1].append(senha)
-                            email_senha_usuario[2].append(nome)
-                            extrato_bancario.append([[],[],[],[]])
-                            saldo_e_quantia_de_saques.append([[0.0],[0]])
-                            index = email_senha_usuario[0].index(email)
+                        nome = input("NOME:\n-->")
+                        data_de_nascimento = formatador_de_data_de_nascimento()
+                        cpf = input("CPF:\n-->")
+                        senha = input("SENHA DE 8 DÍGITOS:\n-->")
+                        endereco = formatador_de_endereco()
+                        if validar_registro(cpf, senha) == True:
+                            criar_conta(cpf, senha, nome, data_de_nascimento, endereco)
+                            index = usuario[0].index(cpf)
                             tela = 1
-                            print(email_senha_usuario, extrato_bancario)
+                            print(usuario, extrato_bancario)
 
                     case "3":
                         print("Fim do Programa")
@@ -141,16 +162,16 @@ while sistema == True:
             if(opcao in opcoes_menu_operacoes):
                 match opcao:
                     case "1" :
-                        resposta_do_deposito = deposito(validador_de_valor_de_entrada(float(input("Valor do Deposito\n-->R$"))), email_senha_usuario[0].index(email))
+                        resposta_do_deposito = deposito(validador_de_valor_de_entrada(float(input("Valor do Deposito\n-->R$"))), usuario[0].index(cpf))
                         if resposta_do_deposito[0] == True:
                             saldo_e_quantia_de_saques[index][0][0] += resposta_do_deposito[1]
                     case "2" : 
-                        resposta_do_saque = saque(validador_de_valor_de_entrada(float(input("Valor do Saque\n-->R$"))), saldo_e_quantia_de_saques[index][0][0], saldo_e_quantia_de_saques[index][1][0], email_senha_usuario[0].index(email))
+                        resposta_do_saque = saque(validador_de_valor_de_entrada(float(input("Valor do Saque\n-->R$"))), saldo_e_quantia_de_saques[index][0][0], saldo_e_quantia_de_saques[index][1][0], usuario[0].index(cpf))
                         if resposta_do_saque[0] == True:
                             saldo_e_quantia_de_saques[index][0][0] -= resposta_do_saque[1]
                             saldo_e_quantia_de_saques[index][1][0] += 1
                     case "3" :
-                        extrato(email_senha_usuario[0].index(email), saldo_e_quantia_de_saques[index][0][0])
+                        extrato(usuario[0].index(cpf), saldo_e_quantia_de_saques[index][0][0])
                     case "4" :
                         tela = 0
 
