@@ -14,9 +14,10 @@ telas = ["""
 tela = 0
 nome = ""
 cpf = ""
-extrato_bancario = [[[],[],[],[],]] #valor, data, hora, bool
+extrato_bancario = [[[],[],[],[]]] #valor, data, hora, bool
 saldo_e_quantia_de_saques = [[[0.0],[0]]]
-usuario = [["00000000000"],["12345678"],["Python"],[["01","01","1990"]],[["rua","01","Py","Pylandia","Pylandia"]],[datetime.now()]]#cpf, senha, nome, data_de_nascimento, endereço, data_de_criação_da_conta
+#cpf, senha, nome, data_de_nascimento, endereço, data_de_criação_da_conta, número_da_conta, agência 0001
+usuario = [["00000000000"],["12345678"],["Python"],[["01","01","1990"]],[["rua","01","Py","Pylandia","Pylandia"]],[datetime.now()],[1],["0001"]]
 index = 0
 sistema = True
 quantia_de_saques_realizados_no_dia = 0
@@ -73,6 +74,7 @@ def acrescentar_no_extrato(valor, valor_positivo_negativo, index):
     extrato_bancario[index][3].append(valor_positivo_negativo)
 
 def extrato(index, saldo):
+    print(f"AGÊNCIA {usuario[7][index]} CONTA N° {usuario[6][index]}")
     for x in range(len(extrato_bancario[index][0])):
             if extrato_bancario[index][3][x] == True:
                 print(f"Deposito de R${extrato_bancario[index][0][x]:.2f} data: {extrato_bancario[index][1][x]} horario: {extrato_bancario[index][2][x]}")
@@ -99,7 +101,7 @@ def validar_login(cpf, senha):
 
 def criar_conta(cpf, senha, nome, data_de_nascimento, endereco):
 
-    extrato_bancario.append([[],[],[],[],[],[]])
+    extrato_bancario.append([[],[],[],[]])
     saldo_e_quantia_de_saques.append([[0.0],[0]])
     usuario[0].append(cpf)
     usuario[1].append(senha)
@@ -107,6 +109,9 @@ def criar_conta(cpf, senha, nome, data_de_nascimento, endereco):
     usuario[3].append(data_de_nascimento)
     usuario[4].append(endereco)
     usuario[5].append(datetime.now())
+    usuario[6].append(len(usuario[6])+1)
+    usuario[7].append("0001")
+
 
 def formatador_de_endereco():
     rua = input("NOME DA RUA:\n-->")
