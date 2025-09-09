@@ -1,11 +1,6 @@
-# Sistema Bancário com Python
-
-## Desafio de criação de sistema bancário 💰
-
-### As regras eram
-- Usuário único. 😉
-- Depósitos com valor acima de R$0. 💵
-- Saques com limite de R$500.00 e 3 vezes por dia. 💸
-- Extrato com todos os saques, depósitos com data e hora e no fim o saldo. 📈📉
-- Opção de sair do programa. ❌
-- Limite de transações diarias para 10.
+### Funcionamento do Sistema bancário 💰
+- Login e Registro de usuários. 😉
+- Depósitos e saques com limite de transação diária. 💵
+- Saques com limite de R$500.00 e 3 saques por dia. 💸
+- Extrato com  número da conta, numero da agência, saques e depósitos realizados na conta corrente do usuário, com data, hora e o saldo. 
+- Ainda precisa ser feita múltiplas contas corrente para um único usuário. ❌
