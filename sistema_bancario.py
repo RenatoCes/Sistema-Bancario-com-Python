@@ -22,7 +22,7 @@ index = 0
 sistema = True
 quantia_de_saques_realizados_no_dia = 0
 
-def validador_de_valor_de_entrada(valor):
+def validador_de_valor_de_entrada(self, valor):
     if type(valor) is float and valor > 0:
         return valor
     elif type(valor) is int and valor > 0:
@@ -30,7 +30,7 @@ def validador_de_valor_de_entrada(valor):
     else:
         return 0.0
     
-def deposito(valor, index):
+def deposito(self, valor, index):
     if valor > 0 and extrato_bancario[index][1].count(datetime.now().strftime("%d/%m/%Y")) < 10:
         print(f"Deposio de R${valor:.2f} realizado.")
         acrescentar_no_extrato(valor, True, index)
@@ -42,7 +42,7 @@ def deposito(valor, index):
         print("Deposito negado, tente novamente.")
         return False, 0
 
-def saque(valor, saldo, quantia_de_saques_realizados_no_dia, index):
+def saque(self, valor, saldo, quantia_de_saques_realizados_no_dia, index):
     transacoes_do_dia = extrato_bancario[index][1].count(datetime.now().strftime("%d/%m/%Y"))
     saque_valido = valor <= saldo and valor > 0 and valor <= 500 and quantia_de_saques_realizados_no_dia < 3 and transacoes_do_dia < 10
     saque_limite_transacao = valor > 0 and valor > 500 and quantia_de_saques_realizados_no_dia < 3 and quantia_de_saques_realizados_no_dia  < 10
@@ -65,6 +65,50 @@ def saque(valor, saldo, quantia_de_saques_realizados_no_dia, index):
     else:
         print("Saque negado, tente novamente.")
         return False, 0
+
+class conta:
+
+    def __init__(self, saldo, numero, agencia, cliente, historico):
+        self._saldo = saldo
+        self._numero = numero
+        self._agencia = agencia
+        self._cliente = cliente
+        self._historico = historico
+        
+class historico:
+    def adcionar_transacao():
+        pass 
+    pass
+
+class conta_corrente:
+    def __init__(self, limite, limite_saques):
+        self._limite = limite
+        self._limite_saques = limite_saques
+        pass
+    pass
+
+class deposito:
+    def __init__(self, valor):
+        self._valor = valor
+        pass
+    pass
+
+class saque:
+    def __init__(self, valor):
+        self._valor = valor
+        pass
+    pass
+
+class transacao:
+    def registrar(self, conta : conta):
+        pass
+    pass
+
+class client:
+    pass
+
+class pessoa_fisica:
+    pass
 
 def acrescentar_no_extrato(valor, valor_positivo_negativo, index):
     data_tempo = datetime.now()
