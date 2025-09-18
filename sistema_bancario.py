@@ -1,227 +1,269 @@
 from datetime import datetime
-telas = ["""
+from abc import ABC, abstractmethod
+
+# CLASSES
+
+class Historico:
+    def __init__(self):
+        self.transacoes = []
+
+    def transacoes_do_dia(self):
+        hoje = datetime.now().strftime("%d/%m/%Y")
+        return [t for t in self.transacoes if t["data"] == hoje]
+
+    def pode_transacionar(self):
+        return len(self.transacoes_do_dia()) < 10
+
+    def adicionar_transacao(self, tipo, valor):
+        if not self.pode_transacionar():
+            print("⚠️ Limite diário de 10 transações atingido.")
+            return False
+
+        data_tempo = datetime.now()
+        self.transacoes.append({
+            "tipo": tipo,
+            "valor": valor,
+            "data": data_tempo.strftime("%d/%m/%Y"),
+            "hora": data_tempo.strftime("%H:%M:%S")
+        })
+        return True
+
+    def extrato(self, conta):
+        print(f"\n--- EXTRATO ---")
+        print(f"AGÊNCIA {conta._agencia} CONTA N° {conta._numero}")
+        for t in self.transacoes:
+            print(f"{t['tipo']} de R${t['valor']:.2f} data: {t['data']} horário: {t['hora']}")
+        print(f"Saldo atual: R${conta._saldo:.2f}\n")
+
+
+class Conta:
+    def __init__(self, numero, agencia, cliente):
+        self._saldo = 0.0
+        self._numero = numero
+        self._agencia = agencia
+        self._cliente = cliente
+        self._historico = Historico()
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    def deposito(self, valor):
+        if valor <= 0:
+            print("Valor inválido para depósito.")
+            return False
+
+        if self._historico.adicionar_transacao("Depósito", valor):
+            self._saldo += valor
+            print(f"Depósito de R${valor:.2f} realizado.")
+            return True
+        return False
+
+    def saque(self, valor, limite=500, limite_saques=3):
+        saques_do_dia = len([t for t in self._historico.transacoes_do_dia() if t["tipo"] == "Saque"])
+
+        if valor <= 0:
+            print("Valor inválido para saque.")
+            return False
+        if valor > self._saldo:
+            print("Saldo insuficiente.")
+            return False
+        if valor > limite:
+            print("O valor do saque excede o limite permitido.")
+            return False
+        if saques_do_dia >= limite_saques:
+            print("Limite de saques diários atingido.")
+            return False
+
+        if self._historico.adicionar_transacao("Saque", valor):
+            self._saldo -= valor
+            print(f"Saque de R${valor:.2f} realizado.")
+            return True
+        return False
+
+
+class ContaCorrente(Conta):
+    def __init__(self, numero, agencia, cliente, limite=500, limite_saques=3):
+        super().__init__(numero, agencia, cliente)
+        self._limite = limite
+        self._limite_saques = limite_saques
+
+
+class Cliente:
+    def __init__(self, nome, cpf, data_nascimento, endereco, senha):
+        self.nome = nome
+        self.cpf = cpf
+        self.data_nascimento = data_nascimento
+        self.endereco = endereco
+        self.senha = senha
+        self.contas = []
+
+    def adicionar_conta(self, conta):
+        self.contas.append(conta)
+
+
+class PessoaFisica(Cliente):
+    pass
+
+
+class Transacao(ABC):
+    @abstractmethod
+    def registrar(self, conta: Conta):
+        pass
+
+
+class Deposito(Transacao):
+    def __init__(self, valor):
+        self._valor = valor
+
+    def registrar(self, conta: Conta):
+        conta.deposito(self._valor)
+
+
+class Saque(Transacao):
+    def __init__(self, valor):
+        self._valor = valor
+
+    def registrar(self, conta: Conta):
+        conta.saque(self._valor)
+
+
+# MENU PRINCIPAL
+
+clientes = []
+contas = []
+prox_numero_conta = 1
+
+
+def encontrar_cliente(cpf, senha=None):
+    for cliente in clientes:
+        if cliente.cpf == cpf and (senha is None or cliente.senha == senha):
+            return cliente
+    return None
+
+
+def menu_principal():
+    global prox_numero_conta
+
+    while True:
+        print("""
 1 - LOGIN
 2 - REGISTRO
-3 - SAIR DO APP
+3 - SAIR
+""")
+        opcao = input("--> ")
 
--->""","""
+        if opcao == "1":  # login
+            cpf = input("CPF:\n--> ")
+            senha = input("SENHA:\n--> ")
+            cliente = encontrar_cliente(cpf, senha)
+            if cliente:
+                print(f"\nBem-vindo(a), {cliente.nome}!\n")
+                menu_conta(cliente)
+            else:
+                print("CPF ou senha inválidos!")
+
+        elif opcao == "2":  # registro
+            nome = input("NOME:\n--> ")
+
+            # validar data de nascimento
+            while True:
+                data_nasc = input("DATA DE NASCIMENTO (dd/mm/aaaa):\n--> ")
+                try:
+                    dia, mes, ano = map(int, data_nasc.split("/"))
+                    datetime(ano, mes, dia)  # tenta criar uma data válida
+                    break
+                except (ValueError, TypeError):
+                    print("Data de nascimento inválida. Use o formato dd/mm/aaaa.")
+
+            # validar CPF
+            while True:
+                cpf = input("CPF (11 dígitos):\n--> ")
+                if cpf.isdigit() and len(cpf) == 11:
+                    if encontrar_cliente(cpf):
+                        print("Já existe um cliente com esse CPF.")
+                    else:
+                        break
+                else:
+                    print("CPF inválido. Deve conter 11 números.")
+
+            # validar senha
+            while True:
+                senha = input("SENHA (8 dígitos):\n--> ")
+                if senha.isdigit() and len(senha) == 8:
+                    break
+                else:
+                    print("Senha inválida. Deve conter 8 números.")
+
+            endereco = input("ENDEREÇO:\n--> ")
+
+            # criar cliente e conta
+            cliente = PessoaFisica(nome, cpf, data_nasc, endereco, senha)
+            clientes.append(cliente)
+
+            conta = ContaCorrente(numero=prox_numero_conta, agencia="0001", cliente=cliente)
+            cliente.adicionar_conta(conta)
+            contas.append(conta)
+            prox_numero_conta += 1
+
+            print("Conta criada com sucesso!\n")
+
+        elif opcao == "3":
+            print("Fim do programa.")
+            break
+        else:
+            print("Opção inválida!")
+
+
+def menu_conta(cliente):
+    conta = cliente.contas[0]  # por enquanto cada cliente só tem 1 conta
+
+    while True:
+        print("""
 1 - DEPOSITO
 2 - SAQUE
 3 - EXTRATO
 4 - SAIR DA CONTA
+""")
+        opcao = input("--> ")
 
--->"""]
-tela = 0
-nome = ""
-cpf = ""
-extrato_bancario = [[[],[],[],[]]] #valor, data, hora, bool
-saldo_e_quantia_de_saques = [[[0.0],[0]]]
-#cpf, senha, nome, data_de_nascimento, endereço, data_de_criação_da_conta, número_da_conta, agência 0001
-usuario = [["00000000000"],["12345678"],["Python"],[["01","01","1990"]],[["rua","01","Py","Pylandia","Pylandia"]],[datetime.now()],[1],["0001"]]
-index = 0
-sistema = True
-quantia_de_saques_realizados_no_dia = 0
+        if opcao == "1":
+            valor_str = input("Valor do depósito: R$")
+            if not valor_str.strip():  # vazio
+                print("Valor inválido.")
+                continue
+            try:
+                valor = float(valor_str)
+            except ValueError:
+                print("Valor inválido.")
+                continue
+            deposito = Deposito(valor)
+            deposito.registrar(conta)
 
-def validador_de_valor_de_entrada(self, valor):
-    if type(valor) is float and valor > 0:
-        return valor
-    elif type(valor) is int and valor > 0:
-        return float(valor)
-    else:
-        return 0.0
+        elif opcao == "2":
+            valor_str = input("Valor do saque: R$")
+            if not valor_str.strip():  # vazio
+                print("Valor inválido.")
+                continue
+            try:
+                valor = float(valor_str)
+            except ValueError:
+                print("Valor inválido.")
+                continue
+            saque = Saque(valor)
+            saque.registrar(conta)
+
+        elif opcao == "3":
+            conta._historico.extrato(conta)
+
+        elif opcao == "4":
+            print("Saindo da conta...\n")
+            break
+        else:
+            print("Opção inválida!")
+
+
+
+if __name__ == "__main__":
+    menu_principal()
     
-def deposito(self, valor, index):
-    if valor > 0 and extrato_bancario[index][1].count(datetime.now().strftime("%d/%m/%Y")) < 10:
-        print(f"Deposio de R${valor:.2f} realizado.")
-        acrescentar_no_extrato(valor, True, index)
-        return True, valor
-    elif valor > 0 and extrato_bancario[index][1].count(datetime.now().strftime("%d/%m/%Y")) >= 10:
-        print("Deposito negado, limite de transações realizadas.")
-        return False, 0
-    else:
-        print("Deposito negado, tente novamente.")
-        return False, 0
-
-def saque(self, valor, saldo, quantia_de_saques_realizados_no_dia, index):
-    transacoes_do_dia = extrato_bancario[index][1].count(datetime.now().strftime("%d/%m/%Y"))
-    saque_valido = valor <= saldo and valor > 0 and valor <= 500 and quantia_de_saques_realizados_no_dia < 3 and transacoes_do_dia < 10
-    saque_limite_transacao = valor > 0 and valor > 500 and quantia_de_saques_realizados_no_dia < 3 and quantia_de_saques_realizados_no_dia  < 10
-    saque_limite_monetario = valor > 0 and valor > 500 and quantia_de_saques_realizados_no_dia < 3
-    saque_limite_diario = valor > 0 and quantia_de_saques_realizados_no_dia >=3
-    if saque_valido:
-        print(f"Saque de R${valor:.2f} realizado.")
-        acrescentar_no_extrato(valor, False, index)
-        quantia_de_saques_realizados_no_dia
-        return True, valor
-    elif saque_limite_transacao:
-        print("Deposito negado, limite de transações realizadas.")
-        return False, 0
-    elif saque_limite_monetario:
-        print("O valor do saque inserido é maior do que o valor permitido.")
-        return False, 0
-    elif saque_limite_diario:
-        print("Saques negado, limite de saques atingido.")
-        return False, 0
-    else:
-        print("Saque negado, tente novamente.")
-        return False, 0
-
-class conta:
-
-    def __init__(self, saldo, numero, agencia, cliente, historico):
-        self._saldo = saldo
-        self._numero = numero
-        self._agencia = agencia
-        self._cliente = cliente
-        self._historico = historico
-        
-class historico:
-    def adcionar_transacao():
-        pass 
-    pass
-
-class conta_corrente:
-    def __init__(self, limite, limite_saques):
-        self._limite = limite
-        self._limite_saques = limite_saques
-        pass
-    pass
-
-class deposito:
-    def __init__(self, valor):
-        self._valor = valor
-        pass
-    pass
-
-class saque:
-    def __init__(self, valor):
-        self._valor = valor
-        pass
-    pass
-
-class transacao:
-    def registrar(self, conta : conta):
-        pass
-    pass
-
-class client:
-    pass
-
-class pessoa_fisica:
-    pass
-
-def acrescentar_no_extrato(valor, valor_positivo_negativo, index):
-    data_tempo = datetime.now()
-    extrato_bancario[index][0].append(valor)
-    extrato_bancario[index][1].append(data_tempo.strftime("%d/%m/%Y"))
-    extrato_bancario[index][2].append(data_tempo.strftime("%H:%M:%S"))
-    extrato_bancario[index][3].append(valor_positivo_negativo)
-
-def extrato(index, saldo):
-    print(f"AGÊNCIA {usuario[7][index]} CONTA N° {usuario[6][index]}")
-    for x in range(len(extrato_bancario[index][0])):
-            if extrato_bancario[index][3][x] == True:
-                print(f"Deposito de R${extrato_bancario[index][0][x]:.2f} data: {extrato_bancario[index][1][x]} horario: {extrato_bancario[index][2][x]}")
-            else:
-                print(f"Saque de R${extrato_bancario[index][0][x]:.2f} data: {extrato_bancario[index][1][x]} horario: {extrato_bancario[index][2][x]}")       
-    print(f"saldo: R${saldo:.2f}")
-
-def validar_registro(cpf, senha):
-    cpf_e_senha_valida = cpf not in usuario[0] and len(cpf) == 11
-    if cpf_e_senha_valida:
-        print("Registro autorizado!")
-        return True
-    else:
-        print("registro negado, cpf ou senha invalida!")
-        return False
-    
-def validar_login(cpf, senha):
-    if cpf in usuario[0] and usuario[1][usuario[0].index(cpf)] == senha:
-        print("Login autorizado!")
-        return True
-    else:
-        print("Login negado, cpf ou senha invalida!")
-        return False
-
-def criar_conta(cpf, senha, nome, data_de_nascimento, endereco):
-
-    extrato_bancario.append([[],[],[],[]])
-    saldo_e_quantia_de_saques.append([[0.0],[0]])
-    usuario[0].append(cpf)
-    usuario[1].append(senha)
-    usuario[2].append(nome)
-    usuario[3].append(data_de_nascimento)
-    usuario[4].append(endereco)
-    usuario[5].append(datetime.now())
-    usuario[6].append(len(usuario[6])+1)
-    usuario[7].append("0001")
-
-
-def formatador_de_endereco():
-    rua = input("NOME DA RUA:\n-->")
-    numero = input("NÚMERO:\n-->")
-    bairro = input("NOME DO BAIRRO:\n-->")
-    cidade = input("NOME DA CIDADE:\n-->")
-    estado = input("NOME DO ESTADO:\n-->")
-    return rua, numero, bairro, cidade, estado
-
-def formatador_de_data_de_nascimento():
-    dia = input("DIA DA DATA DO SEU NASCIMENTO:\n-->")
-    mes = input("MÊS DA DATA DO SEU NASCIMENTO:\n-->")
-    ano = input("ANO DA DATA DO SEU NASCIMENTO:\n-->")
-    return dia, mes, ano
-
-while sistema == True:
-    
-    match tela:
-        case 0:
-            opcoes_menu_0 = ["1","2","3"]
-            opcao = input(telas[tela])
-            if opcao in opcoes_menu_0:
-                match opcao:
-                    case "1":                
-                        cpf = input("CPF:\n-->")
-                        senha = input("SENHA DE 8 DÍGITOS:\n-->")
-                        if validar_login(cpf, senha) == True:
-                            tela = 1
-                            nome = usuario[2][usuario[0].index(cpf)]
-                            index = usuario[0].index(cpf)
-
-                    case "2":
-                        nome = input("NOME:\n-->")
-                        data_de_nascimento = formatador_de_data_de_nascimento()
-                        cpf = input("CPF:\n-->")
-                        senha = input("SENHA DE 8 DÍGITOS:\n-->")
-                        endereco = formatador_de_endereco()
-                        if validar_registro(cpf, senha) == True:
-                            criar_conta(cpf, senha, nome, data_de_nascimento, endereco)
-                            index = usuario[0].index(cpf)
-                            tela = 1
-
-                    case "3":
-                        print("Fim do Programa")
-                        exit()
-            else:
-                print("Opção invalida!")
-        case 1:
-            opcoes_menu_operacoes = ["1","2","3","4"]
-            print(f"Bem vindo(a). {nome.upper()}!")
-            opcao = input(telas[tela])
-            if(opcao in opcoes_menu_operacoes):
-                match opcao:
-                    case "1" :
-                        resposta_do_deposito = deposito(validador_de_valor_de_entrada(float(input("Valor do Deposito\n-->R$"))), usuario[0].index(cpf))
-                        if resposta_do_deposito[0] == True:
-                            saldo_e_quantia_de_saques[index][0][0] += resposta_do_deposito[1]
-                    case "2" : 
-                        resposta_do_saque = saque(validador_de_valor_de_entrada(float(input("Valor do Saque\n-->R$"))), saldo_e_quantia_de_saques[index][0][0], saldo_e_quantia_de_saques[index][1][0], usuario[0].index(cpf))
-                        if resposta_do_saque[0] == True:
-                            saldo_e_quantia_de_saques[index][0][0] -= resposta_do_saque[1]
-                            saldo_e_quantia_de_saques[index][1][0] += 1
-                    case "3" :
-                        extrato(usuario[0].index(cpf), saldo_e_quantia_de_saques[index][0][0])
-                    case "4" :
-                        tela = 0
-
-            else:
-                print("Opção invalida! ")
